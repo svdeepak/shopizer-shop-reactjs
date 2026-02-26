@@ -65,7 +65,7 @@ const TabProduct = ({
         } ${extraClass ? extraClass : ""}`}
     >
       <div className={`${containerClass ? containerClass : "container"}`}>
-        <SectionTitle titleText={window.__FEATURED_CONFIG__.title} positionClass="text-center" />
+        <SectionTitle titleText="Featured Products" positionClass="text-center" />
         <Tab.Container defaultActiveKey="all">
           <Nav variant="pills" className="product-tab-list pt-30 pb-55 text-center">
             {

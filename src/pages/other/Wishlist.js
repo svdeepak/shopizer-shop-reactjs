@@ -4,13 +4,15 @@ import { Link } from "react-router-dom";
 import { useToasts } from "react-toast-notifications";
 import MetaTags from "react-meta-tags";
 import { BreadcrumbsItem } from "react-breadcrumbs-dynamic";
+import { connect } from "react-redux";
 import Layout from "../../layouts/Layout";
 import Breadcrumb from "../../wrappers/breadcrumb/Breadcrumb";
 import { getLocalData } from "../../util/helper";
 import { wishlistService } from "../../util/wishlistService";
+import { addToCart } from "../../redux/actions/cartActions";
 import { multilanguage } from "redux-multilanguage";
 
-const Wishlist = ({ strings }) => {
+const Wishlist = ({ strings, addToCart, cartData, defaultStore, userData }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const { addToast } = useToasts();
@@ -44,6 +46,14 @@ const Wishlist = ({ strings }) => {
     } catch (error) {
       addToast("Failed to remove item", { appearance: "error" });
     }
+  };
+
+  const handleMoveToCart = async (item) => {
+    const existing = cartData.products?.find(p => p.sku === item.productSku);
+    const qty = (existing?.quantity || 0) + 1;
+    const product = { sku: item.productSku, id: item.productId };
+    addToCart(product, addToast, cartData.code, qty, defaultStore, userData);
+    handleRemove(item.productId);
   };
 
   return (
@@ -108,7 +118,12 @@ const Wishlist = ({ strings }) => {
                             </td>
                             <td className="product-wishlist-cart">
                               {item.available ? (
-                                <span className="text-success">In Stock</span>
+                                <button
+                                  onClick={() => handleMoveToCart(item)}
+                                  className="btn btn-primary btn-sm"
+                                >
+                                  Add to Cart
+                                </button>
                               ) : (
                                 <span className="text-danger">Out of Stock</span>
                               )}
@@ -137,7 +152,23 @@ const Wishlist = ({ strings }) => {
 };
 
 Wishlist.propTypes = {
-  strings: PropTypes.object
+  strings: PropTypes.object,
+  addToCart: PropTypes.func,
+  cartData: PropTypes.object,
+  defaultStore: PropTypes.string,
+  userData: PropTypes.oneOfType([PropTypes.object, PropTypes.string])
 };
 
-export default multilanguage(Wishlist);
+const mapStateToProps = state => ({
+  cartData: state.cartData.cartItems,
+  defaultStore: state.merchantData.defaultStore,
+  userData: state.userData.userData
+});
+
+const mapDispatchToProps = dispatch => ({
+  addToCart: (item, addToast, cartId, quantityCount, defaultStore, userData) => {
+    dispatch(addToCart(item, addToast, cartId, quantityCount, defaultStore, userData));
+  }
+});
+
+export default connect(mapStateToProps, mapDispatchToProps)(multilanguage(Wishlist));
